@@ -3,7 +3,6 @@ import random
 # Глобальные переменные
 inventory = ["Зелье исцеления"]
 current_level = 1
-solved_puzzles = set()
 enemies_defeated = set()
 player_health = 15
 
@@ -101,7 +100,7 @@ def show_actions():
 
 # Функция для обработки действий игрока
 def handle_action(action):
-    global inventory, current_level, solved_puzzles, enemies_defeated
+    global inventory, current_level
 
     # Проверяем наличие ключа в текущем уровне
     if action == "Взять ключ":
@@ -125,14 +124,13 @@ def handle_action(action):
         else:
             print("  Здесь нет меча.")
 
-    # Проверяем наличие загадки и правильность ответа
+    # Проверяем наличие загадки и правильность ответа1
     elif action == "Решить загадку":
         if "Загадка" in levels[current_level]["puzzles"]:
             answer = input("  Введите ответ на загадку: ")
             if answer == "Корень":
 
                 # Добавляем загадку в решенные и удаляем ее из уровня
-                solved_puzzles.add("Загадка")
                 levels[current_level]["puzzles"].remove("Загадка")
                 inventory.append("Ответ")
                 print("Правильно! Ты разгадал загадку.")
@@ -157,6 +155,9 @@ def handle_action(action):
 
             # Проверяем, не последний ли это уровень
             if current_level < 3:
+                if "Ключ" in levels[current_level]["door_code"] and "Ключ" in inventory:
+                    inventory.remove("Ключ")
+                    
                 current_level += 1
                 print("  Ты перешел на следующий этаж.")
             else:
@@ -170,7 +171,7 @@ def handle_action(action):
 
 # Функция для боя с врагом
 def fight(enemy_type):
-    global inventory, enemies_defeated, player_health, current_level
+    global inventory, enemies_defeated, player_health
 
     enemy = enemies[enemy_type]
 
