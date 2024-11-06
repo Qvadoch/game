@@ -1,4 +1,5 @@
 import random
+import time
 
 # Глобальные переменные
 inventory = ["Зелье исцеления"]
@@ -9,7 +10,7 @@ player_health = 15
 # Словарь уровней
 levels = {
     1: {
-        "description": "Ты стоишь в тёмном коридоре. Впереди видны две двери, а на полу блестит ключ.",
+        "description": "Ты стоишь в тёмном коридоре. Впереди видна дверь, а на полу блестит ключ.",
         "keys": ["Ключ"],
         "puzzles": [],
         "enemies": [],
@@ -23,17 +24,15 @@ levels = {
         "door_code": ["Ключ"]
     },
     3: {
-        "description": "Ты в библиотеке. На полке лежат книги с загадочными символами. Загадка: 'Что имеет корни, но не может расти, имеет лист, но не имеет ветвей, имеет кожу, но не имеет плоти?",
-        "keys": [],
+        "description": "Вокруг царит полумрак. Рядом с дверью стоит таинственный страж, окутанный тенью. Он смотрит на тебя своими светящимися глазами и говорит: 'Чтобы пройти дальше, ты должен разгадать мою загадку. Если ты не сможешь ответить, ты умрешь.",
         "puzzles": ["Загадка"],
-        "enemies": [],
         "door_code": ["Ответ"]
     }
 }
 
 # Словари для врага
 enemies = {
-    "Гоблин": {"health": random.randint(25, 30), "attack": 5, "weakness": "Меч"}
+    "Гоблин": {"health": random.randint(25, 30), "attack": 5}
 }
 enemy_forms = {
     "Гоблин": {
@@ -65,7 +64,6 @@ items_forms = {
     }
 }
 
-
 # Функция для отображения описания уровня
 def show_level_description():
     if current_level == 2 and "Гоблин" in enemies_defeated:
@@ -76,7 +74,6 @@ def show_level_description():
 # Функция для отображения доступных действий
 def show_actions():
 
-    # Создаем пустой список для хранения доступных действий
     actions = []
 
     # Проверяем наличие ключа, меча, загадки и врагов на текущем уровне
@@ -89,23 +86,20 @@ def show_actions():
     if levels[current_level]["enemies"]:
         actions.append("Сразиться с врагом")
 
-    # Добавляем действие "Перейти на следующий этаж"
     actions.append("Перейти на следующий этаж")
 
     print("Доступные действия:")
 
-    # Выводим список доступных действий
     for action in actions:
         print("  " + action)
 
 # Функция для обработки действий игрока
 def handle_action(action):
-    global inventory, current_level
+    global inventory, current_level, player_health  
 
-    # Проверяем наличие ключа в текущем уровне
+    #Добавление предметов в инвентарь
     if action == "Взять ключ":
 
-        # Добавляем ключ в инвентарь и удаляем его из уровня
         if "Ключ" in levels[current_level]["keys"]:
             inventory.append("Ключ")
             levels[current_level]["keys"].remove("Ключ")
@@ -113,10 +107,8 @@ def handle_action(action):
         else:
             print("  Здесь нет ключа.")
 
-    # Проверяем наличие меча
     elif action == "Взять меч":
 
-        # Добавляем меч в инвентарь и удаляем его из уровня
         if "Меч" in levels[current_level]["keys"]:
             inventory.append("Меч")
             levels[current_level]["keys"].remove("Меч")
@@ -124,26 +116,44 @@ def handle_action(action):
         else:
             print("  Здесь нет меча.")
 
-    # Проверяем наличие загадки и правильность ответа1
     elif action == "Решить загадку":
         if "Загадка" in levels[current_level]["puzzles"]:
-            answer = input("  Введите ответ на загадку: ")
-            if answer == "Корень":
+            print("Загадка: Что имеет корни, но не может расти, имеет лист, но не имеет ветвей, имеет кожу, но не имеет плоти?")
+            print("Ты слышишь странный звук сверху, смотря на потолок. Острые металлические иглы спускаются! Осталось 50 секунд для решения загадки.")
+            
+            total_time = 50
+            start_time = time.time()
 
-                # Добавляем загадку в решенные и удаляем ее из уровня
-                levels[current_level]["puzzles"].remove("Загадка")
-                inventory.append("Ответ")
-                print("Правильно! Ты разгадал загадку.")
-            else:
-                print("  Неверный ответ.")
+            while True:
+                elapsed_time = time.time() - start_time
+                remaining_time = total_time - elapsed_time
+
+                # Проверяем оставшееся время
+                if remaining_time <= 0:
+                    print("Время вышло! Острые иглы спустились!")
+                    player_health -= 30  
+                    if player_health <= 0:
+                        print("Ты погиб!")
+                        exit()
+                    return
+
+                if remaining_time <= 10:
+                    print(f"Осталось {int(remaining_time)} секунд!")
+            
+                answer = input("  Введите ответ на загадку: ")
+
+                if answer == "Корень":
+                    levels[current_level]["puzzles"].remove("Загадка")
+                    inventory.append("Ответ")
+                    print("Правильно! Ты разгадал загадку.")
+                    return
+                else:
+                    print("  Неверный ответ.")
         else:
             print("  Здесь нет загадки.")
 
-    # Проверяем наличие врагов и запускаем бой
     elif action == "Сразиться с врагом":
         if levels[current_level]["enemies"]:
-
-            # Выбираем случайного врага из списка
             enemy = random.choice(levels[current_level]["enemies"])
             fight(enemy)
         else:
@@ -157,7 +167,6 @@ def handle_action(action):
             if current_level < 3:
                 if "Ключ" in levels[current_level]["door_code"] and "Ключ" in inventory:
                     inventory.remove("Ключ")
-                    
                 current_level += 1
                 print("  Ты перешел на следующий этаж.")
             else:
@@ -181,16 +190,13 @@ def fight(enemy_type):
     else:
         print("  Ты сражаешься с", enemy_forms[enemy_type]['creative'],"!")
 
-    # Цикл боя, продолжается пока у врага и игрока есть здоровье
     while enemy["health"] > 0 and player_health > 0:
 
-        # Выводим текущее здоровье игрока и врага
         print("У", enemy_forms[enemy_type]['accusative'], "осталось", enemy['health'], "здоровья.")
         print("У тебя осталось", player_health, "здоровья.")
 
         action = input("  Что ты хочешь сделать? (атаковать/бежать(можно один раз восстановить хп)): ")
 
-        # Если игрок выбрал "атаковать"
         if action == "атаковать":
             
             # Если у игрока есть Меч в инвентаре
@@ -231,7 +237,6 @@ def fight(enemy_type):
                     else:
                         print("Ты решаешь оставить топор лежать.")
 
-            # Если у игрока есть Топор в инвентаре
             elif "Топор" in inventory:
                 
                 #Проверка на прочность топора
@@ -300,7 +305,7 @@ def fight(enemy_type):
         if player_health <= 0:  
             print("Ты проиграл")
             exit()
-    
+
 # Основной цикл игры
 while True:
     show_level_description()
